@@ -10,7 +10,7 @@ typedef struct {
 } skm_msg;
 
 typedef struct {
-    void*   handle;
+    void* handle;
 } skm_port;
 
 int32_t skm_port_count(void);
