@@ -5,8 +5,11 @@ LIBS=-lasound
 all:
 	$(CC) $(CFLAGS) example.c $(LIBS)
 
+format:
+	clang-format -i *.c *.h
+
 check:
 	cppcheck --std=c11 --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction skoshmidi.h
 
-format:
-	clang-format -i *.c *.h
+tidy:
+	clang-tidy example.c -- -std=c11 -D_GNU_SOURCE -lasound
