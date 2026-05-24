@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "skoshmidi.h"
+#include <stdio.h>
 
 int main(void)
 {
