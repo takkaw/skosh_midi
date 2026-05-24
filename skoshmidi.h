@@ -22,9 +22,7 @@ int32_t skm_port_recv(skm_port* p, skm_msg* msg);
 static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_info_t* port_info_out)
 {
     snd_seq_t* seq;
-    if (snd_seq_open(&seq, "default", SND_SEQ_OPEN_INPUT, 0) < 0) {
-        return -1;
-    }
+    if (snd_seq_open(&seq, "default", SND_SEQ_OPEN_INPUT, 0) < 0) return -1;
     *seq_out = seq;
 
     snd_seq_client_info_t* client_info;

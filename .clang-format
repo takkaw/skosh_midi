@@ -4,3 +4,4 @@ ColumnLimit: 100
 PointerAlignment: Left
 SpaceBeforeParens: ControlStatements
 BreakBeforeBraces: Linux
+AllowShortIfStatementsOnASingleLine: WithoutElse
