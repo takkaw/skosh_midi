@@ -45,8 +45,8 @@ static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_in
             if (!(type & SND_SEQ_PORT_TYPE_MIDI_GENERIC)) continue;
             unsigned int cap = snd_seq_port_info_get_capability(port_info);
             if ((cap & req) != req) continue;
-            if (count == index) {
-                if (seq_out) *seq_out = seq;
+            if (seq_out && (count == index)) {
+                *seq_out = seq;
                 if (port_info_out) snd_seq_port_info_copy(port_info_out, port_info);
                 return count;
             }
