@@ -13,6 +13,7 @@ typedef struct {
     snd_seq_t* seq;
     int port_id;
     snd_seq_port_subscribe_t* sub;
+    snd_midi_event_t* midi_ev;
 } skm_port;
 
 int32_t skm_port_count(void);
@@ -92,32 +93,34 @@ int32_t skm_port_open(int32_t port, skm_port* p)
         int port_id = snd_seq_create_simple_port(
             seq, "skoshmidi", SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
             SND_SEQ_PORT_TYPE_APPLICATION);
-
         if (port_id >= 0) {
             snd_seq_port_subscribe_t* sub;
             if (snd_seq_port_subscribe_malloc(&sub) >= 0) {
-                snd_seq_addr_t sender, dest;
-                sender.client = (unsigned char)snd_seq_port_info_get_client(port_info);
-                sender.port = (unsigned char)snd_seq_port_info_get_port(port_info);
-                dest.client = (unsigned char)snd_seq_client_id(seq);
-                dest.port = (unsigned char)port_id;
-                snd_seq_port_subscribe_set_sender(sub, &sender);
-                snd_seq_port_subscribe_set_dest(sub, &dest);
-
-                if (snd_seq_subscribe_port(seq, sub) >= 0) {
-                    p->seq = seq;
-                    p->port_id = port_id;
-                    p->sub = sub;
-                    result = 0;
+                snd_midi_event_t* midi_ev;
+                if (snd_midi_event_new(0, &midi_ev) >= 0) {
+                    snd_midi_event_no_status(midi_ev, 1);
+                    snd_seq_addr_t sender, dest;
+                    sender.client = (unsigned char)snd_seq_port_info_get_client(port_info);
+                    sender.port = (unsigned char)snd_seq_port_info_get_port(port_info);
+                    dest.client = (unsigned char)snd_seq_client_id(seq);
+                    dest.port = (unsigned char)port_id;
+                    snd_seq_port_subscribe_set_sender(sub, &sender);
+                    snd_seq_port_subscribe_set_dest(sub, &dest);
+                    if (snd_seq_subscribe_port(seq, sub) >= 0) {
+                        p->seq = seq;
+                        p->port_id = port_id;
+                        p->sub = sub;
+                        p->midi_ev = midi_ev;
+                        result = 0;
+                    }
+                    if (result != 0) snd_midi_event_free(midi_ev);
                 }
-
                 if (result != 0) snd_seq_port_subscribe_free(sub);
             }
             if (result != 0) snd_seq_delete_simple_port(seq, port_id);
         }
         if (result != 0) snd_seq_close(seq);
     }
-
     return result;
 }
 
@@ -126,10 +129,30 @@ int32_t skm_port_close(skm_port* p)
     if (!p) return -1;
     snd_seq_unsubscribe_port(p->seq, p->sub);
     snd_seq_port_subscribe_free(p->sub);
+    snd_midi_event_free(p->midi_ev);
     snd_seq_delete_simple_port(p->seq, p->port_id);
     snd_seq_close(p->seq);
     p->seq = NULL;
     p->sub = NULL;
     p->port_id = -1;
+    return 0;
+}
+
+int32_t skm_port_recv(skm_port* p, skm_msg* msg)
+{
+    if (!p || !p->seq || !msg) return -1;
+    if (snd_seq_event_input_pending(p->seq, 1) == 0) return -1;
+
+    snd_seq_event_t* ev;
+    if (snd_seq_event_input(p->seq, &ev) < 0) return -1;
+
+    uint8_t buf[sizeof(msg->data)];
+    long size = snd_midi_event_decode(p->midi_ev, buf, sizeof(buf), ev);
+    if (size <= 0 || size > 3) return -1;
+
+    msg->size = (uint8_t)size;
+    msg->data[0] = buf[0];
+    msg->data[1] = (size > 1) ? buf[1] : 0;
+    msg->data[2] = (size > 2) ? buf[2] : 0;
     return 0;
 }
