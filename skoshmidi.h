@@ -39,20 +39,20 @@ static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_in
     snd_seq_client_info_set_client(client_info, -1);
     while (snd_seq_query_next_client(seq, client_info) == 0) {
         int client_id = snd_seq_client_info_get_client(client_info);
+        if (client_id == snd_seq_client_id(seq)) continue;
         snd_seq_port_info_set_client(port_info, client_id);
 
         snd_seq_port_info_set_port(port_info, -1);
         while (snd_seq_query_next_port(seq, port_info) == 0) {
+            unsigned int type = snd_seq_port_info_get_type(port_info);
+            if (!(type & SND_SEQ_PORT_TYPE_MIDI_GENERIC)) continue;
             unsigned int cap = snd_seq_port_info_get_capability(port_info);
-            if ((cap & req) == req) {
-                if (count == index) {
-                    if (port_info_out) {
-                        snd_seq_port_info_copy(port_info_out, port_info);
-                    }
-                    return count;
-                }
-                count++;
+            if ((cap & req) != req) continue;
+            if (count == index) {
+                if (port_info_out) snd_seq_port_info_copy(port_info_out, port_info);
+                return count;
             }
+            count++;
         }
     }
 
