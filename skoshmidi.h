@@ -61,9 +61,7 @@ int32_t skm_port_count(void)
 {
     snd_seq_t* seq = NULL;
     int32_t count = skm_port_find(&seq, -1, NULL);
-    if (seq) {
-        snd_seq_close(seq);
-    }
+    if (seq) snd_seq_close(seq);
     return count;
 }
 
