@@ -10,7 +10,9 @@ typedef struct {
 } skm_msg;
 
 typedef struct {
-    void* handle;
+    snd_seq_t* seq;
+    int port_id;
+    snd_seq_port_subscribe_t* sub;
 } skm_port;
 
 int32_t skm_port_count(void);
@@ -75,4 +77,59 @@ int32_t skm_port_name(int32_t port, char* namebuf, size_t buflen)
     }
     if (seq) snd_seq_close(seq);
     return result;
+}
+
+int32_t skm_port_open(int32_t port, skm_port* p)
+{
+    int32_t result = -1;
+    if (!p) return result;
+
+    snd_seq_t* seq = NULL;
+    snd_seq_port_info_t* port_info;
+    snd_seq_port_info_alloca(&port_info);
+
+    if (skm_port_find(&seq, port, port_info) == port) {
+        int port_id = snd_seq_create_simple_port(
+            seq, "skoshmidi", SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
+            SND_SEQ_PORT_TYPE_APPLICATION);
+
+        if (port_id >= 0) {
+            snd_seq_port_subscribe_t* sub;
+            if (snd_seq_port_subscribe_malloc(&sub) >= 0) {
+                snd_seq_addr_t sender, dest;
+                sender.client = (unsigned char)snd_seq_port_info_get_client(port_info);
+                sender.port = (unsigned char)snd_seq_port_info_get_port(port_info);
+                dest.client = (unsigned char)snd_seq_client_id(seq);
+                dest.port = (unsigned char)port_id;
+                snd_seq_port_subscribe_set_sender(sub, &sender);
+                snd_seq_port_subscribe_set_dest(sub, &dest);
+
+                if (snd_seq_subscribe_port(seq, sub) >= 0) {
+                    p->seq = seq;
+                    p->port_id = port_id;
+                    p->sub = sub;
+                    result = 0;
+                }
+
+                if (result != 0) snd_seq_port_subscribe_free(sub);
+            }
+            if (result != 0) snd_seq_delete_simple_port(seq, port_id);
+        }
+        if (result != 0) snd_seq_close(seq);
+    }
+
+    return result;
+}
+
+int32_t skm_port_close(skm_port* p)
+{
+    if (!p) return -1;
+    snd_seq_unsubscribe_port(p->seq, p->sub);
+    snd_seq_port_subscribe_free(p->sub);
+    snd_seq_delete_simple_port(p->seq, p->port_id);
+    snd_seq_close(p->seq);
+    p->seq = NULL;
+    p->sub = NULL;
+    p->port_id = -1;
+    return 0;
 }
