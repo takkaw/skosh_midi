@@ -14,8 +14,8 @@ typedef struct {
 } skm_port;
 
 int32_t skm_port_count(void);
-int32_t skm_port_name(uint32_t port, char* namebuf, uint32_t buflen);
-int32_t skm_port_open(uint32_t port, skm_port* p);
+int32_t skm_port_name(int32_t port, char* namebuf, uint32_t buflen);
+int32_t skm_port_open(int32_t port, skm_port* p);
 int32_t skm_port_close(skm_port* p);
 int32_t skm_port_recv(skm_port* p, skm_msg* msg);
 
@@ -67,13 +67,13 @@ int32_t skm_port_count(void)
     return count;
 }
 
-int32_t skm_port_name(uint32_t port, char* namebuf, uint32_t buflen)
+int32_t skm_port_name(int32_t port, char* namebuf, uint32_t buflen)
 {
     snd_seq_t* seq = NULL;
     snd_seq_port_info_t* port_info;
     snd_seq_port_info_alloca(&port_info);
     int32_t result = -1;
-    if (skm_port_find(&seq, (int32_t)port, port_info) == (int32_t)port) {
+    if (skm_port_find(&seq, port, port_info) == port) {
         snprintf(namebuf, buflen, "%s", snd_seq_port_info_get_name(port_info));
         result = 0;
     }
