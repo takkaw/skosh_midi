@@ -23,7 +23,6 @@ static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_in
 {
     snd_seq_t* seq;
     if (snd_seq_open(&seq, "default", SND_SEQ_OPEN_INPUT, 0) < 0) return -1;
-    *seq_out = seq;
 
     snd_seq_client_info_t* client_info;
     snd_seq_client_info_alloca(&client_info);
@@ -47,6 +46,7 @@ static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_in
             unsigned int cap = snd_seq_port_info_get_capability(port_info);
             if ((cap & req) != req) continue;
             if (count == index) {
+                if (seq_out) *seq_out = seq;
                 if (port_info_out) snd_seq_port_info_copy(port_info_out, port_info);
                 return count;
             }
@@ -54,16 +54,12 @@ static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_in
         }
     }
 
+    snd_seq_close(seq);
+
     return count;
 }
 
-int32_t skm_port_count(void)
-{
-    snd_seq_t* seq = NULL;
-    int32_t count = skm_port_find(&seq, -1, NULL);
-    if (seq) snd_seq_close(seq);
-    return count;
-}
+int32_t skm_port_count(void) { return skm_port_find(NULL, -1, NULL); }
 
 int32_t skm_port_name(int32_t port, char* namebuf, uint32_t buflen)
 {
