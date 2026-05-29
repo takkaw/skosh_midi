@@ -9,7 +9,7 @@ format:
 	clang-format -i *.c *.h
 
 check:
-	cppcheck --std=c11 --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction skoshmidi.h
+	cppcheck --std=c11 --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction skosh_midi.h
 
 tidy:
 	clang-tidy example.c -- -std=c11 -D_GNU_SOURCE -lasound

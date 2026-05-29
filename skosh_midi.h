@@ -1,4 +1,4 @@
-/* skoshmidi.h is single header C11 MIDI 1.0 cross platform library. */
+/* skosh_midi.h is single header C11 MIDI 1.0 cross platform library. */
 
 #include <stdint.h>
 
@@ -91,7 +91,7 @@ int32_t skm_port_open(int32_t port, skm_port* p)
 
     if (skm_port_find(&seq, port, port_info) == port) {
         int port_id = snd_seq_create_simple_port(
-            seq, "skoshmidi", SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
+            seq, "skosh_midi", SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
             SND_SEQ_PORT_TYPE_APPLICATION);
         if (port_id >= 0) {
             snd_seq_port_subscribe_t* sub;

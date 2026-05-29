@@ -1,4 +1,4 @@
-#include "skoshmidi.h"
+#include "skosh_midi.h"
 #include <stdio.h>
 
 #define SKM_NAME_BUF (100)
