@@ -86,40 +86,37 @@ int32_t skm_port_open(int32_t port, skm_port* p)
     if (!p) return result;
 
     snd_seq_t* seq = NULL;
+    int port_id = -1;
+    snd_seq_port_subscribe_t* sub = NULL;
+    snd_midi_event_t* midi_ev = NULL;
     snd_seq_port_info_t* port_info;
     snd_seq_port_info_alloca(&port_info);
 
-    if (skm_port_find(&seq, port, port_info) == port) {
-        int port_id = snd_seq_create_simple_port(
-            seq, "skosh_midi", SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
-            SND_SEQ_PORT_TYPE_APPLICATION);
-        if (port_id >= 0) {
-            snd_seq_port_subscribe_t* sub;
-            if (snd_seq_port_subscribe_malloc(&sub) >= 0) {
-                snd_midi_event_t* midi_ev;
-                if (snd_midi_event_new(0, &midi_ev) >= 0) {
-                    snd_midi_event_no_status(midi_ev, 1);
-                    snd_seq_addr_t sender, dest;
-                    sender.client = (unsigned char)snd_seq_port_info_get_client(port_info);
-                    sender.port = (unsigned char)snd_seq_port_info_get_port(port_info);
-                    dest.client = (unsigned char)snd_seq_client_id(seq);
-                    dest.port = (unsigned char)port_id;
-                    snd_seq_port_subscribe_set_sender(sub, &sender);
-                    snd_seq_port_subscribe_set_dest(sub, &dest);
-                    if (snd_seq_subscribe_port(seq, sub) >= 0) {
-                        p->seq = seq;
-                        p->port_id = port_id;
-                        p->sub = sub;
-                        p->midi_ev = midi_ev;
-                        result = 0;
-                    }
-                    if (result != 0) snd_midi_event_free(midi_ev);
-                }
-                if (result != 0) snd_seq_port_subscribe_free(sub);
-            }
-            if (result != 0) snd_seq_delete_simple_port(seq, port_id);
-        }
-        if (result != 0) snd_seq_close(seq);
+    do {
+        if (skm_port_find(&seq, port, port_info) != port) break;
+        port_id = snd_seq_create_simple_port(seq, "skosh_midi",
+                                             SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
+                                             SND_SEQ_PORT_TYPE_APPLICATION);
+        if (port_id < 0) break;
+        if (snd_seq_port_subscribe_malloc(&sub) < 0) break;
+        if (snd_midi_event_new(0, &midi_ev) < 0) break;
+        snd_midi_event_no_status(midi_ev, 1);
+        snd_seq_port_subscribe_set_sender(
+            sub, &(snd_seq_addr_t){.client = (unsigned char)snd_seq_port_info_get_client(port_info),
+                                   .port = (unsigned char)snd_seq_port_info_get_port(port_info)});
+        snd_seq_port_subscribe_set_dest(
+            sub, &(snd_seq_addr_t){.client = (unsigned char)snd_seq_client_id(seq),
+                                   .port = (unsigned char)port_id});
+        if (snd_seq_subscribe_port(seq, sub) < 0) break;
+        *p = (skm_port){.seq = seq, .port_id = port_id, .sub = sub, .midi_ev = midi_ev};
+        result = 0;
+    } while (0);
+
+    if (result) {
+        if (midi_ev) snd_midi_event_free(midi_ev);
+        if (sub) snd_seq_port_subscribe_free(sub);
+        if (seq && port_id >= 0) snd_seq_delete_simple_port(seq, port_id);
+        if (seq) snd_seq_close(seq);
     }
     return result;
 }
