@@ -3,7 +3,7 @@ CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wconversion -Wsig
 LIBS=-lasound
 
 all:
-	$(CC) $(CFLAGS) example.c $(LIBS)
+	$(CC) $(CFLAGS) -o example example.c $(LIBS)
 
 format:
 	clang-format -i *.c *.h
