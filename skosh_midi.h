@@ -74,7 +74,7 @@ int32_t skosh_midi_port_name(int32_t port, char* namebuf, size_t buflen)
     snd_seq_port_info_t* port_info;
     snd_seq_port_info_alloca(&port_info);
     if (skosh_midi_port_find(&seq, port, port_info) == port) {
-        snprintf(namebuf, buflen, "%s", snd_seq_port_info_get_name(port_info));
+        (void)snprintf(namebuf, buflen, "%s", snd_seq_port_info_get_name(port_info));
         result = 0;
     }
     if (seq) snd_seq_close(seq);

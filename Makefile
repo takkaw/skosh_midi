@@ -16,6 +16,6 @@ check:
 
 tidy:
 	clang-tidy \
-	-checks=-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling \
- 	skosh_midi.h example.c \
+	-checks='clang-analyzer-*,bugprone-*,performance-*,cert-*,misc--*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling' \
+	skosh_midi.h example.c \
  	-- -std=c11 -D_GNU_SOURCE -lasound
