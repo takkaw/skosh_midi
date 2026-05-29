@@ -7,22 +7,23 @@
 typedef struct {
     uint8_t size;
     uint8_t data[3];
-} skm_msg;
+} skosh_midi_msg;
 
 typedef struct {
     snd_seq_t* seq;
     int port_id;
     snd_seq_port_subscribe_t* sub;
     snd_midi_event_t* midi_ev;
-} skm_port;
+} skosh_midi_port;
 
-int32_t skm_port_count(void);
-int32_t skm_port_name(int32_t port, char* namebuf, size_t buflen);
-int32_t skm_port_open(int32_t port, skm_port* p);
-int32_t skm_port_close(skm_port* p);
-int32_t skm_port_recv(skm_port* p, skm_msg* msg);
+int32_t skosh_midi_port_count(void);
+int32_t skosh_midi_port_name(int32_t port, char* namebuf, size_t buflen);
+int32_t skosh_midi_port_open(int32_t port, skosh_midi_port* p);
+int32_t skosh_midi_port_close(skosh_midi_port* p);
+int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
 
-static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_info_t* port_info_out)
+static int32_t skosh_midi_port_find(snd_seq_t** seq_out, int32_t index,
+                                    snd_seq_port_info_t* port_info_out)
 {
     snd_seq_t* seq;
     if (snd_seq_open(&seq, "default", SND_SEQ_OPEN_INPUT, 0) < 0) return -1;
@@ -62,9 +63,9 @@ static int32_t skm_port_find(snd_seq_t** seq_out, int32_t index, snd_seq_port_in
     return count;
 }
 
-int32_t skm_port_count(void) { return skm_port_find(NULL, -1, NULL); }
+int32_t skosh_midi_port_count(void) { return skosh_midi_port_find(NULL, -1, NULL); }
 
-int32_t skm_port_name(int32_t port, char* namebuf, size_t buflen)
+int32_t skosh_midi_port_name(int32_t port, char* namebuf, size_t buflen)
 {
     int32_t result = -1;
     if (!namebuf || buflen == 0) return result;
@@ -72,7 +73,7 @@ int32_t skm_port_name(int32_t port, char* namebuf, size_t buflen)
     snd_seq_t* seq = NULL;
     snd_seq_port_info_t* port_info;
     snd_seq_port_info_alloca(&port_info);
-    if (skm_port_find(&seq, port, port_info) == port) {
+    if (skosh_midi_port_find(&seq, port, port_info) == port) {
         snprintf(namebuf, buflen, "%s", snd_seq_port_info_get_name(port_info));
         result = 0;
     }
@@ -80,7 +81,7 @@ int32_t skm_port_name(int32_t port, char* namebuf, size_t buflen)
     return result;
 }
 
-int32_t skm_port_open(int32_t port, skm_port* p)
+int32_t skosh_midi_port_open(int32_t port, skosh_midi_port* p)
 {
     int32_t result = -1;
     if (!p) return result;
@@ -93,7 +94,7 @@ int32_t skm_port_open(int32_t port, skm_port* p)
     snd_seq_port_info_alloca(&port_info);
 
     do {
-        if (skm_port_find(&seq, port, port_info) != port) break;
+        if (skosh_midi_port_find(&seq, port, port_info) != port) break;
         port_id = snd_seq_create_simple_port(seq, "skosh_midi",
                                              SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
                                              SND_SEQ_PORT_TYPE_APPLICATION);
@@ -108,7 +109,7 @@ int32_t skm_port_open(int32_t port, skm_port* p)
             sub, &(snd_seq_addr_t){.client = (unsigned char)snd_seq_client_id(seq),
                                    .port = (unsigned char)port_id});
         if (snd_seq_subscribe_port(seq, sub) < 0) break;
-        *p = (skm_port){.seq = seq, .port_id = port_id, .sub = sub, .midi_ev = midi_ev};
+        *p = (skosh_midi_port){.seq = seq, .port_id = port_id, .sub = sub, .midi_ev = midi_ev};
         result = 0;
     } while (0);
 
@@ -121,7 +122,7 @@ int32_t skm_port_open(int32_t port, skm_port* p)
     return result;
 }
 
-int32_t skm_port_close(skm_port* p)
+int32_t skosh_midi_port_close(skosh_midi_port* p)
 {
     if (!p) return -1;
     snd_seq_unsubscribe_port(p->seq, p->sub);
@@ -135,7 +136,7 @@ int32_t skm_port_close(skm_port* p)
     return 0;
 }
 
-int32_t skm_port_recv(skm_port* p, skm_msg* msg)
+int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 {
     if (!p || !p->seq || !msg) return -1;
     if (snd_seq_event_input_pending(p->seq, 1) == 0) return -1;
