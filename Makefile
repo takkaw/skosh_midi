@@ -1,9 +1,13 @@
 CC=gcc
 CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wconversion -Wsign-conversion
 LIBS=-lasound
+TARGET=example
 
 all:
-	$(CC) $(CFLAGS) -o example example.c $(LIBS)
+	$(CC) $(CFLAGS) -o $(TARGET) example.c $(LIBS)
+
+clean:
+	rm -f $(TARGET)
 
 format:
 	clang-format -i *.c *.h
