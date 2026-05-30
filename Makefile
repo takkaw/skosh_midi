@@ -4,7 +4,7 @@ LIBS=-lasound
 TARGET=example
 
 all:
-	$(CC) $(CFLAGS) -o $(TARGET) example.c $(LIBS)
+	$(CC) $(CFLAGS) -o $(TARGET) example_main.c check_include.c $(LIBS)
 
 clean:
 	rm -f $(TARGET)
@@ -16,10 +16,10 @@ check:
 	cppcheck \
 	--std=c11 --enable=all \
 	--suppress=missingIncludeSystem --suppress=unusedFunction \
-	skosh_midi.h example.c
+	skosh_midi.h example_main.c check_include.c
 
 tidy:
 	clang-tidy \
 	-checks='clang-analyzer-*,bugprone-*,performance-*,cert-*,misc--*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling' \
-	skosh_midi.h example.c \
+	skosh_midi.h example_main.c check_include.c \
  	-- -std=c11 -D_GNU_SOURCE -lasound

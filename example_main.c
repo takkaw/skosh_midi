@@ -1,7 +1,9 @@
-#include "skosh_midi.h"
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
+
+#define SKOSH_MIDI_IMPLEMENTATION
+#include "skosh_midi.h"
 
 #define SKOSH_MIDI_NAME_BUF (100)
 #define SKOSH_MIDI_EXAMPLE_PORT (1)
