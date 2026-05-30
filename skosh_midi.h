@@ -4,9 +4,9 @@
 
 #include <alsa/asoundlib.h>
 
-#define SKOSH_MIDI_OUT 0 /* O looks like 0 */
-#define SKOSH_MIDI_IN 1  /* I looks like 1 */
-#define SKOSH_MIDI_MSG_SIZE 3
+#define SKOSH_MIDI_OUT (0) /* O looks like 0 */
+#define SKOSH_MIDI_IN (1)  /* I looks like 1 */
+#define SKOSH_MIDI_MSG_SIZE (3)
 
 typedef struct {
     uint8_t size;
@@ -20,17 +20,17 @@ typedef struct {
     snd_midi_event_t* midi_ev;
 } skosh_midi_port;
 
-int32_t skosh_midi_port_count(int8_t dir);
-int32_t skosh_midi_port_name(int8_t dir, int32_t port, char* namebuf, size_t buflen);
-int32_t skosh_midi_port_open(int8_t dir, int32_t port, skosh_midi_port* p);
+int32_t skosh_midi_port_count(uint8_t dir);
+int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
+int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p);
 int32_t skosh_midi_port_close(skosh_midi_port* p);
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
 
-static int32_t skosh_midi_port_find(int8_t dir, snd_seq_t** seq_out, int32_t index,
+static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t index,
                                     snd_seq_port_info_t* port_info_out)
 {
-    if ((dir < 0) || (dir > 1)) return -1;
+    if (dir > SKOSH_MIDI_IN) return -1;
 
     snd_seq_t* seq;
     if (snd_seq_open(&seq, "default", dir ? SND_SEQ_OPEN_INPUT : SND_SEQ_OPEN_OUTPUT, 0) < 0)
@@ -70,12 +70,12 @@ static int32_t skosh_midi_port_find(int8_t dir, snd_seq_t** seq_out, int32_t ind
     return count;
 }
 
-int32_t skosh_midi_port_count(int8_t dir) { return skosh_midi_port_find(dir, NULL, -1, NULL); }
+int32_t skosh_midi_port_count(uint8_t dir) { return skosh_midi_port_find(dir, NULL, -1, NULL); }
 
-int32_t skosh_midi_port_name(int8_t dir, int32_t port, char* namebuf, size_t buflen)
+int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen)
 {
     int32_t result = -1;
-    if (!namebuf || (buflen == 0) || (dir < 0) || (dir > 1)) return result;
+    if (!namebuf || (buflen == 0) || (dir > SKOSH_MIDI_IN)) return result;
 
     snd_seq_t* seq = NULL;
     snd_seq_port_info_t* port_info;
@@ -88,10 +88,10 @@ int32_t skosh_midi_port_name(int8_t dir, int32_t port, char* namebuf, size_t buf
     return result;
 }
 
-int32_t skosh_midi_port_open(int8_t dir, int32_t port, skosh_midi_port* p)
+int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
 {
     int32_t result = -1;
-    if (!p || (dir < 0) || (dir > 1)) return -1;
+    if (!p || (dir > SKOSH_MIDI_IN)) return -1;
 
     snd_seq_t* seq = NULL;
     int port_id = -1;

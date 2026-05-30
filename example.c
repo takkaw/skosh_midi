@@ -21,7 +21,7 @@ int main(void)
     char port_name[SKOSH_MIDI_NAME_BUF];
 
     /* In */
-    char dir = SKOSH_MIDI_IN;
+    unsigned char dir = SKOSH_MIDI_IN;
     port_count = skosh_midi_port_count(dir);
     printf("In port_count = %d\n", port_count);
     for (int i = 0; i < port_count; i++) {
