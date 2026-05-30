@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wconversion -Wsign-conversion -I..
 LIBS=-lasound
-TARGET=example
+TARGET=skosh_midi_example
 
 all:
 	$(CC) $(CFLAGS) -o $(TARGET) example_main.c check_include.c $(LIBS)
