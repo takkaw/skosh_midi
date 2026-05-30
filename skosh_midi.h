@@ -153,9 +153,9 @@ int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
     snd_seq_event_t* ev;
     if (snd_seq_event_input(p->seq, &ev) < 0) return -1;
 
-    uint8_t buf[sizeof(msg->data)];
-    long size = snd_midi_event_decode(p->midi_ev, buf, sizeof(buf), ev);
-    if (size <= 0 || size > 3) return -1;
+    uint8_t buf[SKOSH_MIDI_MSG_SIZE] = {0};
+    long size = snd_midi_event_decode(p->midi_ev, buf, SKOSH_MIDI_MSG_SIZE, ev);
+    if (size <= 0 || size > SKOSH_MIDI_MSG_SIZE) return -1;
 
     msg->size = (uint8_t)size;
     msg->data[0] = buf[0];
@@ -166,7 +166,7 @@ int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 {
-    if (!p || !p->seq || !msg || (msg->size == 0) || (msg->size > 3)) return -1;
+    if (!p || !p->seq || !msg || (msg->size == 0) || (msg->size > SKOSH_MIDI_MSG_SIZE)) return -1;
 
     snd_seq_event_t ev;
     snd_seq_ev_clear(&ev);
