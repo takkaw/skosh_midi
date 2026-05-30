@@ -16,26 +16,32 @@ typedef struct {
     snd_midi_event_t* midi_ev;
 } skosh_midi_port;
 
-int32_t skosh_midi_port_count(void);
-int32_t skosh_midi_port_name(int32_t port, char* namebuf, size_t buflen);
-int32_t skosh_midi_port_open(int32_t port, skosh_midi_port* p);
+#define SKOSH_MIDI_OUT 0 /* O looks like 0 */
+#define SKOSH_MIDI_IN 1  /* I looks like 1 */
+
+int32_t skosh_midi_port_count(int8_t dir);
+int32_t skosh_midi_port_name(int8_t dir, int32_t port, char* namebuf, size_t buflen);
+int32_t skosh_midi_port_open(int8_t dir, int32_t port, skosh_midi_port* p);
 int32_t skosh_midi_port_close(skosh_midi_port* p);
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
 
-static int32_t skosh_midi_port_find(snd_seq_t** seq_out, int32_t index,
+static int32_t skosh_midi_port_find(int8_t dir, snd_seq_t** seq_out, int32_t index,
                                     snd_seq_port_info_t* port_info_out)
 {
+    if ((dir < 0) || (dir > 1)) return -1;
+
     snd_seq_t* seq;
-    if (snd_seq_open(&seq, "default", SND_SEQ_OPEN_INPUT, 0) < 0) return -1;
+    if (snd_seq_open(&seq, "default", dir ? SND_SEQ_OPEN_INPUT : SND_SEQ_OPEN_OUTPUT, 0) < 0)
+        return -1;
 
     snd_seq_client_info_t* client_info;
     snd_seq_client_info_alloca(&client_info);
-
     snd_seq_port_info_t* port_info;
     snd_seq_port_info_alloca(&port_info);
 
     int32_t count = 0;
-    unsigned int req = SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ;
+    unsigned int req = dir ? (SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ)
+                           : (SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE);
 
     snd_seq_client_info_set_client(client_info, -1);
     while (snd_seq_query_next_client(seq, client_info) == 0) {
@@ -57,23 +63,22 @@ static int32_t skosh_midi_port_find(snd_seq_t** seq_out, int32_t index,
             count++;
         }
     }
-
     snd_seq_close(seq);
 
     return count;
 }
 
-int32_t skosh_midi_port_count(void) { return skosh_midi_port_find(NULL, -1, NULL); }
+int32_t skosh_midi_port_count(int8_t dir) { return skosh_midi_port_find(dir, NULL, -1, NULL); }
 
-int32_t skosh_midi_port_name(int32_t port, char* namebuf, size_t buflen)
+int32_t skosh_midi_port_name(int8_t dir, int32_t port, char* namebuf, size_t buflen)
 {
     int32_t result = -1;
-    if (!namebuf || buflen == 0) return result;
+    if (!namebuf || (buflen == 0) || (dir < 0) || (dir > 1)) return result;
 
     snd_seq_t* seq = NULL;
     snd_seq_port_info_t* port_info;
     snd_seq_port_info_alloca(&port_info);
-    if (skosh_midi_port_find(&seq, port, port_info) == port) {
+    if (skosh_midi_port_find(dir, &seq, port, port_info) == port) {
         (void)snprintf(namebuf, buflen, "%s", snd_seq_port_info_get_name(port_info));
         result = 0;
     }
@@ -81,33 +86,37 @@ int32_t skosh_midi_port_name(int32_t port, char* namebuf, size_t buflen)
     return result;
 }
 
-int32_t skosh_midi_port_open(int32_t port, skosh_midi_port* p)
+int32_t skosh_midi_port_open(int8_t dir, int32_t port, skosh_midi_port* p)
 {
     int32_t result = -1;
-    if (!p) return result;
+    if (!p || (dir < 0) || (dir > 1)) return -1;
 
     snd_seq_t* seq = NULL;
     int port_id = -1;
     snd_seq_port_subscribe_t* sub = NULL;
     snd_midi_event_t* midi_ev = NULL;
+
     snd_seq_port_info_t* port_info;
     snd_seq_port_info_alloca(&port_info);
 
     do {
-        if (skosh_midi_port_find(&seq, port, port_info) != port) break;
-        port_id = snd_seq_create_simple_port(seq, "skosh_midi",
-                                             SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
-                                             SND_SEQ_PORT_TYPE_APPLICATION);
+        if (skosh_midi_port_find(dir, &seq, port, port_info) != port) break;
+        port_id =
+            snd_seq_create_simple_port(seq, "skosh_midi",
+                                       dir ? SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE
+                                           : SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ,
+                                       SND_SEQ_PORT_TYPE_APPLICATION);
         if (port_id < 0) break;
         if (snd_seq_port_subscribe_malloc(&sub) < 0) break;
         if (snd_midi_event_new(0, &midi_ev) < 0) break;
         snd_midi_event_no_status(midi_ev, 1);
-        snd_seq_port_subscribe_set_sender(
-            sub, &(snd_seq_addr_t){.client = (unsigned char)snd_seq_port_info_get_client(port_info),
-                                   .port = (unsigned char)snd_seq_port_info_get_port(port_info)});
-        snd_seq_port_subscribe_set_dest(
-            sub, &(snd_seq_addr_t){.client = (unsigned char)snd_seq_client_id(seq),
-                                   .port = (unsigned char)port_id});
+
+        snd_seq_addr_t addr[2] = {
+            {.client = (unsigned char)snd_seq_client_id(seq), .port = (unsigned char)port_id},
+            {.client = (unsigned char)snd_seq_port_info_get_client(port_info),
+             .port = (unsigned char)snd_seq_port_info_get_port(port_info)}};
+        snd_seq_port_subscribe_set_sender(sub, &addr[dir]);
+        snd_seq_port_subscribe_set_dest(sub, &addr[1 - dir]);
         if (snd_seq_subscribe_port(seq, sub) < 0) break;
         *p = (skosh_midi_port){.seq = seq, .port_id = port_id, .sub = sub, .midi_ev = midi_ev};
         result = 0;
