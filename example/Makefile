@@ -16,10 +16,10 @@ check:
 	cppcheck \
 	--std=c11 --enable=all \
 	--suppress=missingIncludeSystem --suppress=unusedFunction \
-	../skosh_midi.h example_main.c check_include.c -I..
+	example_main.c check_include.c -I..
 
 tidy:
 	clang-tidy \
 	-checks='clang-analyzer-*,bugprone-*,performance-*,cert-*,misc--*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling' \
-	../skosh_midi.h example_main.c check_include.c \
+	example_main.c check_include.c \
 	-- -std=c11 -D_GNU_SOURCE -lasound -I..
