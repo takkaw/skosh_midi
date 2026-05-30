@@ -130,9 +130,7 @@ int32_t skosh_midi_port_close(skosh_midi_port* p)
     snd_midi_event_free(p->midi_ev);
     snd_seq_delete_simple_port(p->seq, p->port_id);
     snd_seq_close(p->seq);
-    p->seq = NULL;
-    p->sub = NULL;
-    p->port_id = -1;
+    *p = (skosh_midi_port){.seq = NULL, .port_id = -1, .sub = NULL, .midi_ev = NULL};
     return 0;
 }
 
