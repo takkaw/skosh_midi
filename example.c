@@ -1,10 +1,20 @@
 #include "skosh_midi.h"
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 
 #define SKOSH_MIDI_NAME_BUF (100)
 #define SKOSH_MIDI_EXAMPLE_PORT (1)
 #define SKOSH_MIDI_EXAMPLE_MODE (SKOSH_MIDI_OUT)
+
+bool exit_flg = 0;
+
+static void sigint_handler(int sig)
+{
+    (void)sig;
+    exit_flg = 1;
+}
+
 int main(void)
 {
     int port_count = 0;
@@ -32,6 +42,8 @@ int main(void)
         }
     }
 
+    (void)signal(SIGINT, sigint_handler);
+
 #if SKOSH_MIDI_EXAMPLE_MODE
     /* Recv */
     dir = SKOSH_MIDI_IN;
@@ -39,6 +51,7 @@ int main(void)
     if (skosh_midi_port_open(dir, SKOSH_MIDI_EXAMPLE_PORT, &p) == 0) {
         skosh_midi_msg msg = {0};
         while (1) {
+            if (exit_flg) break;
             if (skosh_midi_port_recv(&p, &msg) == 0) {
                 for (int i = 0; i < msg.size; i++) {
                     printf("%02X ", msg.data[i]);
@@ -58,6 +71,7 @@ int main(void)
     if (skosh_midi_port_open(dir, SKOSH_MIDI_EXAMPLE_PORT, &p) == 0) {
         while (1) {
             if (getchar() != EOF) {
+                if (exit_flg) break;
                 for (int i = 0; i < msg[flag].size; i++) {
                     printf("%02X ", msg[flag].data[i]);
                 }
