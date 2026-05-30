@@ -166,7 +166,8 @@ int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 {
-    if (!p || !p->seq || !msg || (msg->size == 0) || (msg->size > SKOSH_MIDI_MSG_SIZE)) return -1;
+    if (!p || !p->seq || !msg) return -1;
+    if ((msg->size == 0) || (msg->size > SKOSH_MIDI_MSG_SIZE)) return -1;
 
     snd_seq_event_t ev;
     snd_seq_ev_clear(&ev);
