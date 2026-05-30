@@ -4,9 +4,13 @@
 
 #include <alsa/asoundlib.h>
 
+#define SKOSH_MIDI_OUT 0 /* O looks like 0 */
+#define SKOSH_MIDI_IN 1  /* I looks like 1 */
+#define SKOSH_MIDI_MSG_SIZE 3
+
 typedef struct {
     uint8_t size;
-    uint8_t data[3];
+    uint8_t data[SKOSH_MIDI_MSG_SIZE];
 } skosh_midi_msg;
 
 typedef struct {
@@ -16,14 +20,12 @@ typedef struct {
     snd_midi_event_t* midi_ev;
 } skosh_midi_port;
 
-#define SKOSH_MIDI_OUT 0 /* O looks like 0 */
-#define SKOSH_MIDI_IN 1  /* I looks like 1 */
-
 int32_t skosh_midi_port_count(int8_t dir);
 int32_t skosh_midi_port_name(int8_t dir, int32_t port, char* namebuf, size_t buflen);
 int32_t skosh_midi_port_open(int8_t dir, int32_t port, skosh_midi_port* p);
 int32_t skosh_midi_port_close(skosh_midi_port* p);
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
+int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
 
 static int32_t skosh_midi_port_find(int8_t dir, snd_seq_t** seq_out, int32_t index,
                                     snd_seq_port_info_t* port_info_out)
@@ -108,7 +110,7 @@ int32_t skosh_midi_port_open(int8_t dir, int32_t port, skosh_midi_port* p)
                                        SND_SEQ_PORT_TYPE_APPLICATION);
         if (port_id < 0) break;
         if (snd_seq_port_subscribe_malloc(&sub) < 0) break;
-        if (snd_midi_event_new(0, &midi_ev) < 0) break;
+        if (snd_midi_event_new(dir ? 0 : SKOSH_MIDI_MSG_SIZE, &midi_ev) < 0) break;
         snd_midi_event_no_status(midi_ev, 1);
 
         snd_seq_addr_t addr[2] = {
@@ -159,5 +161,24 @@ int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
     msg->data[0] = buf[0];
     msg->data[1] = (size > 1) ? buf[1] : 0;
     msg->data[2] = (size > 2) ? buf[2] : 0;
+    return 0;
+}
+
+int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
+{
+    if (!p || !p->seq || !msg || (msg->size == 0) || (msg->size > 3)) return -1;
+
+    snd_seq_event_t ev;
+    snd_seq_ev_clear(&ev);
+    snd_midi_event_init(p->midi_ev);
+    if (snd_midi_event_encode(p->midi_ev, msg->data, (long)msg->size, &ev) <= 0) return -1;
+
+    snd_seq_ev_set_source(&ev, (unsigned char)p->port_id);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+
+    if (snd_seq_event_output(p->seq, &ev) < 0) return -1;
+    if (snd_seq_drain_output(p->seq) < 0) return -1;
+
     return 0;
 }

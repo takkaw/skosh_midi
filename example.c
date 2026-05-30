@@ -1,8 +1,10 @@
 #include "skosh_midi.h"
+#include <stdbool.h>
 #include <stdio.h>
 
 #define SKOSH_MIDI_NAME_BUF (100)
 #define SKOSH_MIDI_EXAMPLE_PORT (1)
+#define SKOSH_MIDI_EXAMPLE_MODE (SKOSH_MIDI_OUT)
 int main(void)
 {
     int port_count = 0;
@@ -30,6 +32,7 @@ int main(void)
         }
     }
 
+#if SKOSH_MIDI_EXAMPLE_MODE
     /* Recv */
     dir = SKOSH_MIDI_IN;
     skosh_midi_port p = {0};
@@ -45,6 +48,26 @@ int main(void)
         }
         skosh_midi_port_close(&p);
     }
+#else
+    /* Send */
+    dir = SKOSH_MIDI_OUT;
+    skosh_midi_port p = {0};
+    bool flag = 0;
+    skosh_midi_msg msg[2] = {{.size = 3, .data = {0x90, 0x3C, 0x7F}},
+                             {.size = 3, .data = {0x80, 0x3C, 0x00}}};
+    if (skosh_midi_port_open(dir, SKOSH_MIDI_EXAMPLE_PORT, &p) == 0) {
+        while (1) {
+            if (getchar() != EOF) {
+                for (int i = 0; i < msg[flag].size; i++) {
+                    printf("%02X ", msg[flag].data[i]);
+                }
+                skosh_midi_port_send(&p, &msg[flag]);
+                flag = !flag; /* toggle */
+            }
+        }
+        skosh_midi_port_close(&p);
+    }
+#endif
 
     return 0;
 }
