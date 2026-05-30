@@ -1,12 +1,13 @@
-/* skosh_midi.h is single header C11 MIDI 1.0 cross platform library. */
+/* skosh_midi.h - single header C11 MIDI 1.0 I/O library */
+/* backend: ALSA sequencer */
+/* NOTE: The API is experimental and may change without notice. */
 
 #include <stdint.h>
-
-#include <alsa/asoundlib.h>
-
 #define SKOSH_MIDI_OUT (0) /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)  /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
+
+#include <alsa/asoundlib.h>
 
 typedef struct {
     uint8_t size;
