@@ -155,7 +155,7 @@ int32_t skosh_midi_port_close(skosh_midi_port* p)
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 {
     if (!p || !p->seq || !msg) return -1;
-    if (snd_seq_event_input_pending(p->seq, 1) == 0) return -1;
+    if (snd_seq_event_input_pending(p->seq, 1) <= 0) return -1;
 
     snd_seq_event_t* ev;
     if (snd_seq_event_input(p->seq, &ev) < 0) return -1;
