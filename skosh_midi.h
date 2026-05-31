@@ -6,8 +6,9 @@
 #define SKOSH_MIDI_H
 
 #include <stdint.h>
-#define SKOSH_MIDI_OUT (0) /* O looks like 0 */
-#define SKOSH_MIDI_IN (1)  /* I looks like 1 */
+#define SKOSH_MIDI_VERSION (0x000100) /* 0.1.0 */
+#define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
+#define SKOSH_MIDI_IN (1)             /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
 
 #include <alsa/asoundlib.h>

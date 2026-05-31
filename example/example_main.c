@@ -65,7 +65,9 @@ int main(int argc, const char* argv[])
         }
         break;
     default:
-        printf("usage: %s in|out <port_num>\n", argv[0]);
+        printf("skosh_midi version %d.%d.%d\n", (SKOSH_MIDI_VERSION >> 16) & 0xFF,
+               (SKOSH_MIDI_VERSION >> 8) & 0xFF, SKOSH_MIDI_VERSION & 0xFF);
+        printf("usage: skoshi_midi_example in|out <port_num>\n\n");
 
         char port_name[SKOSH_MIDI_NAME_BUF];
         printf("In port_count = %d\n", in_port_count);
