@@ -20,14 +20,14 @@ A single-header, C11 MIDI 1.0 I/O library licensed under MIT.
 #ifndef SKOSH_MIDI_H
 #define SKOSH_MIDI_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #define SKOSH_MIDI_VERSION (0x000100) /* 0.1.0 */
 #define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)             /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
 
-#if  defined(__linux__)
+#if defined(__linux__)
 #include <alsa/asoundlib.h>
 typedef struct {
     snd_seq_t* seq;
@@ -57,7 +57,7 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
 #endif /* SKOSH_MIDI_H */
 
 #ifdef SKOSH_MIDI_IMPLEMENTATION
-#if  defined(__linux__)
+#if defined(__linux__)
 static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t index,
                                     snd_seq_port_info_t* port_info_out)
 {
@@ -215,6 +215,43 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
     return 0;
 }
 #elif defined(__APPLE__)
+int32_t skosh_midi_port_count(uint8_t dir)
+{
+    (void)dir;
+    return -1;
+}
+int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen)
+{
+    (void)dir;
+    (void)port;
+    (void)namebuf;
+    (void)buflen;
+    return -1;
+}
+int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
+{
+    (void)dir;
+    (void)port;
+    (void)p;
+    return -1;
+}
+int32_t skosh_midi_port_close(skosh_midi_port* p)
+{
+    (void)p;
+    return -1;
+}
+int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
+{
+    (void)p;
+    (void)msg;
+    return -1;
+}
+int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
+{
+    (void)p;
+    (void)msg;
+    return -1;
+}
 #else
 #error "Unsupported platform."
 #endif
