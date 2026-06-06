@@ -1,10 +1,18 @@
 CC=gcc
-CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wconversion -Wsign-conversion -I..
-LIBS=-lasound
+CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -Werror -Wconversion -Wsign-conversion -I..
 TARGET=skosh_midi_example
 
+UNAME := $(shell uname)
+ifeq ($(UNAME), Linux)
+	CFLAGS += -fanalyzer
+	LDFLAGS += -lasound
+endif
+ifeq ($(UNAME), Darwin)
+	LDFLAGS += -framework CoreFoundation -framework CoreMIDI
+endif
+
 all:
-	$(CC) $(CFLAGS) -o $(TARGET) example_main.c check_include.c $(LIBS)
+	$(CC) $(CFLAGS) -o $(TARGET) example_main.c check_include.c $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)
@@ -22,4 +30,4 @@ tidy:
 	clang-tidy \
 	-checks='clang-analyzer-*,bugprone-*,performance-*,cert-*,misc--*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling' \
 	example_main.c check_include.c \
-	-- -std=c11 -D_GNU_SOURCE -lasound -I..
+	-- -std=c11 -D_GNU_SOURCE -I.. $(LDFLAGS)
