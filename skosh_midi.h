@@ -21,24 +21,32 @@ A single-header, C11 MIDI 1.0 I/O library licensed under MIT.
 #define SKOSH_MIDI_H
 
 #include <stdint.h>
+#include <stddef.h>
 #define SKOSH_MIDI_VERSION (0x000100) /* 0.1.0 */
 #define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)             /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
 
+#if  defined(__linux__)
 #include <alsa/asoundlib.h>
-
-typedef struct {
-    uint8_t size;
-    uint8_t data[SKOSH_MIDI_MSG_SIZE];
-} skosh_midi_msg;
-
 typedef struct {
     snd_seq_t* seq;
     int port_id;
     snd_seq_port_subscribe_t* sub;
     snd_midi_event_t* midi_ev;
 } skosh_midi_port;
+#elif defined(__APPLE__)
+typedef struct {
+    int dummy;
+} skosh_midi_port;
+#else
+#error "Unsupported platform."
+#endif
+
+typedef struct {
+    uint8_t size;
+    uint8_t data[SKOSH_MIDI_MSG_SIZE];
+} skosh_midi_msg;
 
 int32_t skosh_midi_port_count(uint8_t dir);
 int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
@@ -49,6 +57,7 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
 #endif /* SKOSH_MIDI_H */
 
 #ifdef SKOSH_MIDI_IMPLEMENTATION
+#if  defined(__linux__)
 static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t index,
                                     snd_seq_port_info_t* port_info_out)
 {
@@ -205,6 +214,10 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 
     return 0;
 }
+#elif defined(__APPLE__)
+#else
+#error "Unsupported platform."
+#endif
 #endif /* SKOSH_MIDI_IMPLEMENTATION */
 /*
 MIT License
