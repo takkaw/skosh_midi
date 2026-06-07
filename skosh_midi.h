@@ -3,7 +3,7 @@
 A single-header, C11 MIDI 1.0 I/O library licensed under MIT.
 
 - Skosh Supported Platform: ALSA sequencer (Linux).
-- Skosh Features: No MIDI 2.0, SysEx, virtual ports, timestamps, scheduled sends, or callbacks.
+- Skosh Features: No MIDI2.0, SysEx, timestamps, scheduled sends, callbacks, hotplug, virtual ports.
 - Skosh MIDI messages: up to 3 bytes.
 - Skosh Usage:
 ```c
