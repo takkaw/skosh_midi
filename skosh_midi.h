@@ -40,9 +40,9 @@ typedef struct {
 typedef struct {
     int dummy;
 } skosh_midi_port;
-#else
+#else /* !__linux__ && !__APPLE__ */
 #error "Unsupported platform."
-#endif
+#endif /* __linux__ / __APPLE__ */
 
 typedef struct {
     uint8_t size;
@@ -244,26 +244,27 @@ int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
     (void)p;
     return -1;
 }
+
 int32_t skosh_midi_port_close(skosh_midi_port* p)
 {
     (void)p;
     return -1;
 }
+
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 {
     (void)p;
     (void)msg;
     return -1;
 }
+
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 {
     (void)p;
     (void)msg;
     return -1;
 }
-#else
-#error "Unsupported platform."
-#endif
+#endif /* __linux__ / __APPLE__ */
 #endif /* SKOSH_MIDI_IMPLEMENTATION */
 /*
 MIT License
