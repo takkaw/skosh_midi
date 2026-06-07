@@ -10,7 +10,7 @@ A single-header, C11 MIDI 1.0 I/O library licensed under MIT.
   #include "skosh_midi.h"
 ```
 - Skosh Dependencies: -lasound (Linux).
-- Skosh MIDI port API: count, name, open, close, recv, send. Returns: 0=OK, negative=Error.
+- Skosh MIDI port API: count, name, open, close, recv, send. Returns: >=0 is OK, <0 is Error.
 - Skosh Examples: See the `example` directory.
 
 **Experimental:** The API may change without notice.
