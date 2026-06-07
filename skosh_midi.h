@@ -36,6 +36,7 @@ typedef struct {
     snd_midi_event_t* midi_ev;
 } skosh_midi_port;
 #elif defined(__APPLE__)
+#include <CoreMIDI/CoreMIDI.h>
 typedef struct {
     int dummy;
 } skosh_midi_port;
@@ -217,8 +218,8 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 #elif defined(__APPLE__)
 int32_t skosh_midi_port_count(uint8_t dir)
 {
-    (void)dir;
-    return -1;
+    if (dir > SKOSH_MIDI_IN) return -1;
+    return dir ? (int32_t)MIDIGetNumberOfSources() : (int32_t)MIDIGetNumberOfDestinations();
 }
 int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen)
 {
