@@ -221,14 +221,22 @@ int32_t skosh_midi_port_count(uint8_t dir)
     if (dir > SKOSH_MIDI_IN) return -1;
     return dir ? (int32_t)MIDIGetNumberOfSources() : (int32_t)MIDIGetNumberOfDestinations();
 }
+
 int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen)
 {
-    (void)dir;
-    (void)port;
-    (void)namebuf;
-    (void)buflen;
-    return -1;
+    int32_t result = -1;
+    if (!namebuf || (buflen == 0) || (dir > SKOSH_MIDI_IN) || (port < 0)) return result;
+    MIDIEndpointRef ep = dir ? MIDIGetSource((ItemCount)port) : MIDIGetDestination((ItemCount)port);
+    if (!ep) return result;
+
+    CFStringRef name = NULL;
+    if (MIDIObjectGetStringProperty(ep, kMIDIPropertyDisplayName, &name) != 0) return result;
+    result = CFStringGetCString(name, namebuf, (CFIndex)buflen, kCFStringEncodingUTF8) ? 0 : result;
+    CFRelease(name);
+
+    return result;
 }
+
 int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
 {
     (void)dir;
