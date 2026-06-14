@@ -344,9 +344,18 @@ int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 {
-    (void)p;
-    (void)msg;
-    return -1;
+    int32_t ret = -1;
+    if (!p || !msg || p->dir != SKOSH_MIDI_OUT) return ret;
+
+    MIDIEventList evtlist;
+    MIDIEventPacket* pkt = MIDIEventListInit(&evtlist, kMIDIProtocol_1_0);
+    uint32_t word = (((uint32_t)0x20 << 24) | ((uint32_t)msg->data[0] << 16) |
+                     ((uint32_t)msg->data[1] << 8) | ((uint32_t)msg->data[2]));
+
+    if (MIDIEventListAdd(&evtlist, sizeof(evtlist), pkt, 0, 1, &word) &&
+        (MIDISendEventList(p->port, p->endpoint, &evtlist) == noErr))
+        ret = 0;
+    return ret;
 }
 #endif /* __linux__ / __APPLE__ */
 #endif /* SKOSH_MIDI_IMPLEMENTATION */
