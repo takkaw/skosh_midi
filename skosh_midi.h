@@ -20,12 +20,16 @@ A single-header, C11 MIDI 1.0 I/O library licensed under MIT.
 #ifndef SKOSH_MIDI_H
 #define SKOSH_MIDI_H
 
+#include <stdatomic.h> /* for ring buffer */
 #include <stddef.h>
 #include <stdint.h>
 #define SKOSH_MIDI_VERSION (0x000100) /* 0.1.0 */
 #define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)             /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
+#ifndef SKOSH_MIDI_RB_SIZE
+#define SKOSH_MIDI_RB_SIZE (64)
+#endif
 
 #if defined(__linux__)
 #include <alsa/asoundlib.h>
@@ -49,15 +53,41 @@ typedef struct {
     uint8_t data[SKOSH_MIDI_MSG_SIZE];
 } skosh_midi_msg;
 
+typedef struct {
+    _Atomic uint16_t head;
+    _Atomic uint16_t tail;
+    skosh_midi_msg buf[SKOSH_MIDI_RB_SIZE];
+} skosh_midi_rb; /* SPSC ring buffer */
+
 int32_t skosh_midi_port_count(uint8_t dir);
 int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
 int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p);
 int32_t skosh_midi_port_close(skosh_midi_port* p);
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
+int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg*);
+int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg);
 #endif /* SKOSH_MIDI_H */
 
 #ifdef SKOSH_MIDI_IMPLEMENTATION
+int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg* msg)
+{
+    unsigned int head = atomic_load_explicit(&rb->head, memory_order_relaxed);
+    unsigned int next = (head + 1) % SKOSH_MIDI_RB_SIZE;
+    if (next == atomic_load_explicit(&rb->tail, memory_order_acquire)) return -1; /* full */
+    rb->buf[head] = *msg;
+    atomic_store_explicit(&rb->head, next, memory_order_release);
+    return 0;
+}
+
+int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg)
+{
+    unsigned int tail = atomic_load_explicit(&rb->tail, memory_order_relaxed);
+    if (tail == atomic_load_explicit(&rb->head, memory_order_acquire)) return -1; /* empty */
+    *msg = rb->buf[tail];
+    atomic_store_explicit(&rb->tail, (tail + 1) % SKOSH_MIDI_RB_SIZE, memory_order_release);
+    return 0;
+}
 #if defined(__linux__)
 static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t index,
                                     snd_seq_port_info_t* port_info_out)
