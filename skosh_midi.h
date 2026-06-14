@@ -31,6 +31,17 @@ A single-header, C11 MIDI 1.0 I/O library licensed under MIT.
 #define SKOSH_MIDI_RB_SIZE (64)
 #endif
 
+typedef struct {
+    uint8_t size;
+    uint8_t data[SKOSH_MIDI_MSG_SIZE];
+} skosh_midi_msg;
+
+typedef struct {
+    _Atomic uint16_t head;
+    _Atomic uint16_t tail;
+    skosh_midi_msg buf[SKOSH_MIDI_RB_SIZE];
+} skosh_midi_rb; /* SPSC ring buffer */
+
 #if defined(__linux__)
 #include <alsa/asoundlib.h>
 typedef struct {
@@ -42,22 +53,15 @@ typedef struct {
 #elif defined(__APPLE__)
 #include <CoreMIDI/CoreMIDI.h>
 typedef struct {
-    int dummy;
+    MIDIClientRef client;
+    MIDIPortRef port;
+    MIDIEndpointRef endpoint;
+    uint8_t dir;
+    skosh_midi_rb rb;
 } skosh_midi_port;
 #else /* !__linux__ && !__APPLE__ */
 #error "Unsupported platform."
 #endif /* __linux__ / __APPLE__ */
-
-typedef struct {
-    uint8_t size;
-    uint8_t data[SKOSH_MIDI_MSG_SIZE];
-} skosh_midi_msg;
-
-typedef struct {
-    _Atomic uint16_t head;
-    _Atomic uint16_t tail;
-    skosh_midi_msg buf[SKOSH_MIDI_RB_SIZE];
-} skosh_midi_rb; /* SPSC ring buffer */
 
 int32_t skosh_midi_port_count(uint8_t dir);
 int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
@@ -88,6 +92,18 @@ int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg)
     atomic_store_explicit(&rb->tail, (tail + 1) % SKOSH_MIDI_RB_SIZE, memory_order_release);
     return 0;
 }
+
+#if defined(__APPLE__)
+static const uint8_t skosh_midi_msg_size_tbl_system[16] = {0, 2, 3, 2, 0, 0, 1, 0,
+                                                           1, 0, 1, 1, 1, 0, 1, 1};
+static uint8_t skosh_midi_msg_size(uint8_t status)
+{
+    if (((status & 0xF0) == 0xC0) || ((status & 0xF0) == 0xD0)) return 2;
+    if (status >= 0xF0) return skosh_midi_msg_size_tbl_system[status & 0x0F];
+    return 3;
+}
+#endif /* __APPLE__ */
+
 #if defined(__linux__)
 static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t index,
                                     snd_seq_port_info_t* port_info_out)
@@ -269,10 +285,47 @@ int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t bu
 
 int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
 {
-    (void)dir;
-    (void)port;
-    (void)p;
-    return -1;
+    int32_t result = -1;
+    if (dir > SKOSH_MIDI_IN || port < 0 || !p) return result;
+    p->dir = dir;
+    do {
+        if (MIDIClientCreate(CFSTR("skosh_midi"), NULL, NULL, &(p->client)) != noErr) break;
+        p->endpoint = dir ? MIDIGetSource((ItemCount)port) : MIDIGetDestination((ItemCount)port);
+        if (!p->endpoint) break;
+        OSStatus st =
+            (!dir ? MIDIOutputPortCreate(p->client, CFSTR("skosh_midi"), &(p->port))
+                  : MIDIInputPortCreateWithProtocol(
+                        p->client, CFSTR("skosh_midi"), kMIDIProtocol_1_0, &(p->port),
+                        ^(const MIDIEventList* evtlist, void* pp) {
+                          const MIDIEventPacket* pkt = &evtlist->packet[0];
+                          for (uint32_t i = 0; i < evtlist->numPackets; i++) {
+                              uint32_t status = pkt->words[0];
+                              uint8_t mt = (uint8_t)((status >> 28) & 0xF);
+                              if (mt == 0x1 || mt == 0x2) {
+                                  skosh_midi_msg msg = {0};
+                                  msg.data[0] = (uint8_t)((status >> 16) & 0xFF);
+                                  msg.data[1] = (uint8_t)((status >> 8) & 0xFF);
+                                  msg.data[2] = (uint8_t)(status & 0xFF);
+                                  msg.size = skosh_midi_msg_size((uint8_t)((status >> 16) & 0xFF));
+                                  if (msg.size > 0)
+                                      skosh_midi_rb_push(&((skosh_midi_port*)pp)->rb, &msg);
+                              }
+                              pkt = MIDIEventPacketNext(pkt);
+                          }
+                        }));
+        if (st != noErr) break;
+        if (dir && (MIDIPortConnectSource(p->port, p->endpoint, (void*)p) != noErr)) break;
+        result = 0;
+    } while (0);
+
+    if (result != 0) {
+        if (p->port) MIDIPortDispose(p->port);
+        if (p->client) MIDIClientDispose(p->client);
+        p->port = 0;
+        p->client = 0;
+        p->endpoint = 0;
+    }
+    return result;
 }
 
 int32_t skosh_midi_port_close(skosh_midi_port* p)
