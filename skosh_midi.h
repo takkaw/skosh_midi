@@ -113,7 +113,7 @@ int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t bu
 int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
 {
     int32_t result = -1;
-    if (!p || (dir > SKOSH_MIDI_IN)) return -1;
+    if (!p || (dir > SKOSH_MIDI_IN) || port < 0) return -1;
 
     snd_seq_t* seq = NULL;
     int port_id = -1;
