@@ -63,14 +63,14 @@ typedef struct {
 #error "Unsupported platform."
 #endif /* __linux__ / __APPLE__ */
 
-int32_t skosh_midi_port_count(uint8_t dir);
-int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
-int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p);
-int32_t skosh_midi_port_close(skosh_midi_port* p);
-int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
-int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
-int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg*);
-int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg);
+extern int32_t skosh_midi_port_count(uint8_t dir);
+extern int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
+extern int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p);
+extern int32_t skosh_midi_port_close(skosh_midi_port* p);
+extern int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
+extern int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
+extern int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg*);
+extern int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg);
 #endif /* SKOSH_MIDI_H */
 
 #ifdef SKOSH_MIDI_IMPLEMENTATION
