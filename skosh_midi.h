@@ -338,9 +338,8 @@ int32_t skosh_midi_port_close(skosh_midi_port* p)
 
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 {
-    (void)p;
-    (void)msg;
-    return -1;
+    if (!p || !msg) return -1;
+    return skosh_midi_rb_pop(&p->rb, msg);
 }
 
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
