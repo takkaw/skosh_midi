@@ -287,6 +287,7 @@ int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
 {
     int32_t result = -1;
     if (dir > SKOSH_MIDI_IN || port < 0 || !p) return result;
+    *p = (skosh_midi_port){0};
     p->dir = dir;
     do {
         if (MIDIClientCreate(CFSTR("skosh_midi"), NULL, NULL, &(p->client)) != noErr) break;
@@ -318,20 +319,21 @@ int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
         result = 0;
     } while (0);
 
-    if (result != 0) {
-        if (p->port) MIDIPortDispose(p->port);
-        if (p->client) MIDIClientDispose(p->client);
-        p->port = 0;
-        p->client = 0;
-        p->endpoint = 0;
-    }
+    if (result != 0) skosh_midi_port_close(p);
+
     return result;
 }
 
 int32_t skosh_midi_port_close(skosh_midi_port* p)
 {
-    (void)p;
-    return -1;
+    if (!p) return -1;
+    if (p->dir && p->port && p->endpoint) MIDIPortDisconnectSource(p->port, p->endpoint);
+    if (p->port) MIDIPortDispose(p->port);
+    if (p->client) MIDIClientDispose(p->client);
+    p->port = 0;
+    p->client = 0;
+    p->endpoint = 0;
+    return 0;
 }
 
 int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
