@@ -1,6 +1,6 @@
 /*
 # `skosh_midi.h`
-A single-header, C11 MIDI 1.0 I/O library licensed under MIT.
+A single-header, C11 MIDI 1.0 I/O library.
 
 - Skosh Supported Platform: ALSA sequencer (Linux), CoreMIDI (macOS).
 - Skosh Features: No MIDI2.0, SysEx, virtual ports, timestamps, scheduled sends, callbacks, hotplug.
