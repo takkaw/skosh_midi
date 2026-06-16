@@ -25,7 +25,7 @@ A single-header, C11 MIDI 1.0 I/O library.
 #include <stdatomic.h> /* for ring buffer */
 #include <stddef.h>
 #include <stdint.h>
-#define SKOSH_MIDI_VERSION (0x000100) /* 0.1.0 */
+#define SKOSH_MIDI_VERSION (0x000200) /* 0.2.0 */
 #define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)             /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
