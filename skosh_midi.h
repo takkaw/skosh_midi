@@ -62,6 +62,7 @@ typedef struct {
     skosh_midi_rb rb;
 } skosh_midi_port;
 #elif defined(_WIN64)
+#include <windows.h>
 typedef struct {
     uint8_t dir;
 } skosh_midi_port;
@@ -366,8 +367,8 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 #elif _WIN64
 int32_t skosh_midi_port_count(uint8_t dir)
 {
-    (void)dir;
-    return 0;
+    if (dir > SKOSH_MIDI_IN) return -1;
+    return (int32_t)(dir ? midiInGetNumDevs() : midiOutGetNumDevs());
 }
 
 int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen)
