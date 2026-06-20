@@ -363,7 +363,50 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
         ret = 0;
     return ret;
 }
-#endif /* __linux__ / __APPLE__ */
+#elif _WIN64
+int32_t skosh_midi_port_count(uint8_t dir)
+{
+    (void)dir;
+    return 0;
+}
+
+int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen)
+{
+    (void)dir;
+    (void)port;
+    (void)namebuf;
+    (void)buflen;
+    return 0;
+}
+
+int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
+{
+    (void)dir;
+    (void)port;
+    (void)p;
+    return 0;
+}
+
+int32_t skosh_midi_port_close(skosh_midi_port* p)
+{
+    (void)p;
+    return 0;
+}
+
+int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
+{
+    (void)p;
+    (void)msg;
+    return 0;
+}
+
+int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
+{
+    (void)p;
+    (void)msg;
+    return 0;
+}
+#endif /* __linux__ / __APPLE__ / _WIN64 */
 #endif /* SKOSH_MIDI_IMPLEMENTATION */
 /*
 MIT License
