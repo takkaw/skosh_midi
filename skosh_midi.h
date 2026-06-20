@@ -82,8 +82,8 @@ extern int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg);
 #ifdef SKOSH_MIDI_IMPLEMENTATION
 int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg* msg)
 {
-    unsigned int head = atomic_load_explicit(&rb->head, memory_order_relaxed);
-    unsigned int next = (head + 1) % SKOSH_MIDI_RB_SIZE;
+    uint16_t head = (uint16_t)atomic_load_explicit(&rb->head, memory_order_relaxed);
+    uint16_t next = (uint16_t)((head + 1) % SKOSH_MIDI_RB_SIZE);
     if (next == atomic_load_explicit(&rb->tail, memory_order_acquire)) return -1; /* full */
     rb->buf[head] = *msg;
     atomic_store_explicit(&rb->head, next, memory_order_release);
@@ -92,10 +92,10 @@ int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg* msg)
 
 int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg)
 {
-    unsigned int tail = atomic_load_explicit(&rb->tail, memory_order_relaxed);
+    uint16_t tail = (uint16_t)atomic_load_explicit(&rb->tail, memory_order_relaxed);
     if (tail == atomic_load_explicit(&rb->head, memory_order_acquire)) return -1; /* empty */
     *msg = rb->buf[tail];
-    atomic_store_explicit(&rb->tail, (tail + 1) % SKOSH_MIDI_RB_SIZE, memory_order_release);
+    atomic_store_explicit(&rb->tail, (tail + 1u) % SKOSH_MIDI_RB_SIZE, memory_order_release);
     return 0;
 }
 
