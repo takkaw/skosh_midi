@@ -61,9 +61,13 @@ typedef struct {
     uint8_t dir;
     skosh_midi_rb rb;
 } skosh_midi_port;
-#else /* !__linux__ && !__APPLE__ */
+#elif defined(_WIN64)
+typedef struct {
+    uint8_t dir;
+} skosh_midi_port;
+#else /* !__linux__ && !__APPLE__ && !_WIN64 */
 #error "Unsupported platform."
-#endif /* __linux__ / __APPLE__ */
+#endif /* __linux__ / __APPLE__ / _WIN64 */
 
 extern int32_t skosh_midi_port_count(uint8_t dir);
 extern int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
