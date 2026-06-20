@@ -10,6 +10,9 @@ endif
 ifeq ($(UNAME), Darwin)
 	LDFLAGS += -framework CoreFoundation -framework CoreMIDI
 endif
+ifneq ($(filter MINGW% MSYS% CYGWIN%,$(UNAME)),)
+	LDFLAGS += -lwinmm
+endif
 
 all:
 	$(CC) $(CFLAGS) -o $(TARGET) example_main.c check_include.c $(LDFLAGS)
