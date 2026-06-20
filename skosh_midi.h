@@ -373,10 +373,16 @@ int32_t skosh_midi_port_count(uint8_t dir)
 
 int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen)
 {
-    (void)dir;
-    (void)port;
-    (void)namebuf;
-    (void)buflen;
+    if (dir > SKOSH_MIDI_IN || port < 0 || !namebuf || buflen == 0) return -1;
+    if (dir == SKOSH_MIDI_IN) {
+        MIDIINCAPSA caps;
+        if (midiInGetDevCapsA((UINT_PTR)port, &caps, sizeof(caps)) != MMSYSERR_NOERROR) return -1;
+        (void)snprintf(namebuf, buflen, "%s", caps.szPname);
+    } else {
+        MIDIOUTCAPSA caps;
+        if (midiOutGetDevCapsA((UINT_PTR)port, &caps, sizeof(caps)) != MMSYSERR_NOERROR) return -1;
+        (void)snprintf(namebuf, buflen, "%s", caps.szPname);
+    }
     return 0;
 }
 
