@@ -1,4 +1,4 @@
-CC=gcc
+CC?=cc
 CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -Werror -Wconversion -Wsign-conversion -I..
 TARGET=skosh_midi_example
 
