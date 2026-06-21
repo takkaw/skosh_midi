@@ -12,6 +12,7 @@ A single-header, C11 MIDI 1.0 I/O library.
 - Skosh Dependencies:
   - Linux: -lasound
   - macOS: -framework CoreFoundation -framework CoreMIDI
+  - Windows(MSYS2/MinGW): -winmm
 - Skosh MIDI port API: count, name, open, close, recv, send. Returns: >=0 is OK, <0 is Error.
 - Skosh Examples: See the `example` directory.
 
