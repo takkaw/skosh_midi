@@ -368,7 +368,7 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
         ret = 0;
     return ret;
 }
-#elif _WIN64
+#elif defined(_WIN64)
 int32_t skosh_midi_port_count(uint8_t dir)
 {
     if (dir > SKOSH_MIDI_IN) return -1;
