@@ -46,10 +46,20 @@ static void midi_list(const int port_count[2])
     }
 }
 
+/* wait 1msec */
+static void wait_1ms(void)
+{
+#if defined(_WIN64)
+    Sleep(1);
+#else
+    static const struct timespec ts = {.tv_sec = 0, .tv_nsec = 1000000};
+    nanosleep(&ts, NULL);
+#endif
+}
+
 /* recv MIDI data and print it */
 static void midi_recv(int port_no)
 {
-    static const struct timespec ts = {.tv_sec = 0, .tv_nsec = 1000000};
     skosh_midi_port port = {0};
     if (skosh_midi_port_open(SKOSH_MIDI_IN, port_no, &port) == 0) {
         skosh_midi_msg in_msg = {0};
@@ -60,7 +70,7 @@ static void midi_recv(int port_no)
                 }
                 printf("\n");
             }
-            nanosleep(&ts, NULL);
+            wait_1ms();
         }
         skosh_midi_port_close(&port);
     }
