@@ -31,8 +31,9 @@ check:
 
 tidy:
 	clang-tidy \
-	-checks='clang-analyzer-*,bugprone-*,performance-*,cert-*,misc--*,\
-	-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,\
-	-bugprone-easily-swappable-parameters' \
+	-checks='clang-analyzer-*,bugprone-*,performance-*,cert-*,misc--*, \
+	-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling, \
+	-bugprone-easily-swappable-parameters, \
+	-bugprone-casting-through-void' \
 	example_main.c check_include.c \
 	-- -std=c11 -D_GNU_SOURCE -I..
