@@ -25,7 +25,7 @@ format:
 
 check:
 	cppcheck \
-	--std=c11 --enable=all \
+	--std=c11 --enable=all --check-level=exhaustive \
 	--suppress=missingIncludeSystem --suppress=unusedFunction \
 	example_main.c check_include.c -I..
 
