@@ -421,7 +421,15 @@ int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
 
 int32_t skosh_midi_port_close(skosh_midi_port* p)
 {
-    (void)p;
+    if (!p) return -1;
+    if (p->dir == SKOSH_MIDI_IN && p->hin) {
+        (void)midiInStop(p->hin);
+        (void)midiInClose(p->hin);
+        p->hin = NULL;
+    } else if (p->hout) {
+        (void)midiOutClose(p->hout);
+        p->hout = NULL;
+    }
     return 0;
 }
 
