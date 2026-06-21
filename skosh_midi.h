@@ -441,9 +441,10 @@ int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg)
 
 int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
 {
-    (void)p;
-    (void)msg;
-    return 0;
+    if (!p || !msg || p->dir != SKOSH_MIDI_OUT || !p->hout) return -1;
+    if (msg->size == 0 || msg->size > SKOSH_MIDI_MSG_SIZE) return -1;
+    DWORD word = (DWORD)msg->data[0] | ((DWORD)msg->data[1] << 8) | ((DWORD)msg->data[2] << 16);
+    return (midiOutShortMsg(p->hout, word) == MMSYSERR_NOERROR) ? 0 : -1;
 }
 #endif /* __linux__ / __APPLE__ / _WIN64 */
 #endif /* SKOSH_MIDI_IMPLEMENTATION */
