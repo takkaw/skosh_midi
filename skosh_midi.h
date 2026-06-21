@@ -64,7 +64,10 @@ typedef struct {
 #elif defined(_WIN64)
 #include <windows.h>
 typedef struct {
+    HMIDIIN hin;
+    HMIDIOUT hout;
     uint8_t dir;
+    skosh_midi_rb rb;
 } skosh_midi_port;
 #else /* !__linux__ && !__APPLE__ && !_WIN64 */
 #error "Unsupported platform."
@@ -100,16 +103,17 @@ int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg)
     return 0;
 }
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(_WIN64)
 static const uint8_t skosh_midi_msg_size_tbl_system[16] = {0, 2, 3, 2, 0, 0, 1, 0,
                                                            1, 0, 1, 1, 1, 0, 1, 1};
 static uint8_t skosh_midi_msg_size(uint8_t status)
 {
+    if (status < 0x80) return 0;
     if (((status & 0xF0) == 0xC0) || ((status & 0xF0) == 0xD0)) return 2;
     if (status >= 0xF0) return skosh_midi_msg_size_tbl_system[status & 0x0F];
     return 3;
 }
-#endif /* __APPLE__ */
+#endif /* __APPLE__ / _WIN64 */
 
 #if defined(__linux__)
 static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t index,
@@ -386,11 +390,32 @@ int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t bu
     return 0;
 }
 
+static void CALLBACK skosh_midi_in_cb(HMIDIIN hm, UINT msg, DWORD_PTR p, DWORD_PTR p1, DWORD_PTR p2)
+{
+    (void)hm, (void)p2;
+    if (msg != MIM_DATA) return;
+    skosh_midi_msg m;
+    m.data[0] = (uint8_t)(p1 & 0xFF);
+    m.data[1] = (uint8_t)((p1 >> 8) & 0xFF);
+    m.data[2] = (uint8_t)((p1 >> 16) & 0xFF);
+    m.size = skosh_midi_msg_size(m.data[0]);
+    if (m.size > 0) skosh_midi_rb_push(&((skosh_midi_port*)(void*)p)->rb, &m);
+}
+
 int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
 {
-    (void)dir;
-    (void)port;
-    (void)p;
+    if (!p || dir > SKOSH_MIDI_IN || port < 0) return -1;
+    *p = (skosh_midi_port){0};
+    p->dir = dir;
+    MMRESULT mr = (!dir ? midiOutOpen(&p->hout, (UINT)port, 0, 0, CALLBACK_NULL)
+                        : midiInOpen(&p->hin, (UINT)port, (DWORD_PTR)skosh_midi_in_cb, (DWORD_PTR)p,
+                                     CALLBACK_FUNCTION));
+    if (mr != MMSYSERR_NOERROR) return -1;
+    if ((dir == SKOSH_MIDI_IN) && (midiInStart(p->hin) != MMSYSERR_NOERROR)) {
+        midiInClose(p->hin);
+        p->hin = NULL;
+        return -1;
+    }
     return 0;
 }
 
