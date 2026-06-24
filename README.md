@@ -15,6 +15,7 @@ A single-header, MIDI 1.0 I/O library.
   - Windows(MSYS2/MinGW): -lwinmm
   - Windows(MSVC): winmm
 - Skosh MIDI port API: count, name, open, close, recv, send. Returns: >=0 is OK, <0 is Error.
+- Skosh Ring Buffer API: push, pop. Returns: 0 is OK, -1 is Error.
 - Skosh Examples: See the `example` directory.
 
 **Experimental:** The API may change without notice.
