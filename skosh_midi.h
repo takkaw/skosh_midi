@@ -23,7 +23,6 @@ A single-header, C11 MIDI 1.0 I/O library.
 #ifndef SKOSH_MIDI_H
 #define SKOSH_MIDI_H
 
-#include <stdatomic.h> /* for ring buffer */
 #include <stddef.h>
 #include <stdint.h>
 #define SKOSH_MIDI_VERSION (0x000301) /* 0.3.1 */
@@ -34,14 +33,29 @@ A single-header, C11 MIDI 1.0 I/O library.
 #define SKOSH_MIDI_RB_SIZE (64)
 #endif
 
+#if defined(_WIN64) && defined(_MSC_VER)
+#include <intrin.h>
+#define SKOSH_MEM_ORD_RELAXED 0
+#define SKOSH_MEM_ORD_ACQUIRE 0
+#define SKOSH_MEM_ORD_RELEASE 0
+#define skosh_atomic_load(p, order) ((uint16_t)_InterlockedOr16((short*)(p), 0))
+#define skosh_atomic_store(p, v, order) ((void)_InterlockedExchange16((short*)(p), (short)(v)))
+#else /* !_WIN64 || !_MSC_VER */
+#define SKOSH_MEM_ORD_RELAXED __ATOMIC_RELAXED
+#define SKOSH_MEM_ORD_ACQUIRE __ATOMIC_ACQUIRE
+#define SKOSH_MEM_ORD_RELEASE __ATOMIC_RELEASE
+#define skosh_atomic_load(p, order) __atomic_load_n((p), (order))
+#define skosh_atomic_store(p, v, order) __atomic_store_n((p), (v), (order))
+#endif /* _WIN64 / _MSC_VER */
+
 typedef struct {
     uint8_t size;
     uint8_t data[SKOSH_MIDI_MSG_SIZE];
 } skosh_midi_msg;
 
 typedef struct {
-    _Atomic uint16_t head;
-    _Atomic uint16_t tail;
+    volatile uint16_t head;
+    volatile uint16_t tail;
     skosh_midi_msg buf[SKOSH_MIDI_RB_SIZE];
 } skosh_midi_rb; /* SPSC ring buffer */
 
@@ -87,20 +101,20 @@ extern int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg);
 #ifdef SKOSH_MIDI_IMPLEMENTATION
 int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg* msg)
 {
-    uint16_t head = (uint16_t)atomic_load_explicit(&rb->head, memory_order_relaxed);
+    uint16_t head = (uint16_t)skosh_atomic_load(&rb->head, SKOSH_MEM_ORD_RELAXED);
     uint16_t next = (uint16_t)((head + 1) % SKOSH_MIDI_RB_SIZE);
-    if (next == atomic_load_explicit(&rb->tail, memory_order_acquire)) return -1; /* full */
+    if (next == skosh_atomic_load(&rb->tail, SKOSH_MEM_ORD_ACQUIRE)) return -1; /* full */
     rb->buf[head] = *msg;
-    atomic_store_explicit(&rb->head, next, memory_order_release);
+    skosh_atomic_store(&rb->head, next, SKOSH_MEM_ORD_RELEASE);
     return 0;
 }
 
 int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg)
 {
-    uint16_t tail = (uint16_t)atomic_load_explicit(&rb->tail, memory_order_relaxed);
-    if (tail == atomic_load_explicit(&rb->head, memory_order_acquire)) return -1; /* empty */
+    uint16_t tail = (uint16_t)skosh_atomic_load(&rb->tail, SKOSH_MEM_ORD_RELAXED);
+    if (tail == skosh_atomic_load(&rb->head, SKOSH_MEM_ORD_ACQUIRE)) return -1; /* empty */
     *msg = rb->buf[tail];
-    atomic_store_explicit(&rb->tail, (tail + 1u) % SKOSH_MIDI_RB_SIZE, memory_order_release);
+    skosh_atomic_store(&rb->tail, (tail + 1u) % SKOSH_MIDI_RB_SIZE, SKOSH_MEM_ORD_RELEASE);
     return 0;
 }
 
