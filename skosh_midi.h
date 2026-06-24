@@ -32,7 +32,7 @@ A single-header, MIDI 1.0 I/O library.
 #define SKOSH_MIDI_MSG_SIZE (3)
 #ifndef SKOSH_MIDI_RB_SIZE
 #define SKOSH_MIDI_RB_SIZE (64)
-#endif
+#endif /* SKOSH_MIDI_RB_SIZE */
 
 #if defined(_WIN64) && defined(_MSC_VER)
 #include <intrin.h>
@@ -47,7 +47,7 @@ A single-header, MIDI 1.0 I/O library.
 #define SKOSH_MEM_ORD_RELEASE __ATOMIC_RELEASE
 #define skosh_atomic_load(p, order) __atomic_load_n((p), (order))
 #define skosh_atomic_store(p, v, order) __atomic_store_n((p), (v), (order))
-#endif /* _WIN64 / _MSC_VER */
+#endif /* _WIN64 && _MSC_VER */
 
 typedef struct {
     uint8_t size;
@@ -87,7 +87,7 @@ typedef struct {
 } skosh_midi_port;
 #else /* !__linux__ && !__APPLE__ && !_WIN64 */
 #error "Unsupported platform."
-#endif /* __linux__ / __APPLE__ / _WIN64 */
+#endif /* __linux__ || __APPLE__ || _WIN64 */
 
 extern int32_t skosh_midi_port_count(uint8_t dir);
 extern int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
@@ -129,7 +129,7 @@ static uint8_t skosh_midi_msg_size(uint8_t status)
     if (status >= 0xF0) return skosh_midi_msg_size_tbl_system[status & 0x0F];
     return 3;
 }
-#endif /* __APPLE__ / _WIN64 */
+#endif /* __APPLE__ || _WIN64 */
 
 #if defined(__linux__)
 static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t index,
@@ -462,7 +462,7 @@ int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg)
     DWORD word = (DWORD)msg->data[0] | ((DWORD)msg->data[1] << 8) | ((DWORD)msg->data[2] << 16);
     return (midiOutShortMsg(p->hout, word) == MMSYSERR_NOERROR) ? 0 : -1;
 }
-#endif /* __linux__ / __APPLE__ / _WIN64 */
+#endif /* __linux__ || __APPLE__ || _WIN64 */
 #endif /* SKOSH_MIDI_IMPLEMENTATION */
 /*
 MIT License
