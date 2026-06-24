@@ -1,5 +1,5 @@
 CC?=cc
-CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -Werror -Wconversion -Wsign-conversion -I..
+CFLAGS=-Wall -Wextra -Wpedantic -Werror -Wconversion -Wsign-conversion -I..
 TARGET=skosh_midi_example
 
 UNAME := $(shell uname)
@@ -25,7 +25,7 @@ format:
 
 check:
 	cppcheck \
-	--std=c11 --enable=all --check-level=exhaustive \
+	--enable=all --check-level=exhaustive \
 	--suppress=missingIncludeSystem --suppress=unusedFunction \
 	example_main.c check_include.c -I..
 
@@ -37,4 +37,4 @@ tidy:
 	-bugprone-casting-through-void, \
 	-performance-no-int-to-ptr' \
 	example_main.c check_include.c \
-	-- -std=c11 -D_GNU_SOURCE -I..
+	-- -D_GNU_SOURCE -I..
