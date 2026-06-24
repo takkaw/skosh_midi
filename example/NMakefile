@@ -1,0 +1,12 @@
+CC=cl
+CFLAGS=/O2 /W4 /I..
+TARGET=skosh_midi_example.exe
+LDFLAGS=winmm.lib
+
+all: $(TARGET)
+
+$(TARGET):
+	$(CC) $(CFLAGS) example_main.c check_include.c $(LDFLAGS) /Fe:$(TARGET)
+
+clean:
+	del /f $(TARGET) *.obj
