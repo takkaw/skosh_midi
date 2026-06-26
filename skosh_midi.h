@@ -335,7 +335,7 @@ int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
                                   msg.data[0] = (uint8_t)((status >> 16) & 0xFF);
                                   msg.data[1] = (uint8_t)((status >> 8) & 0xFF);
                                   msg.data[2] = (uint8_t)(status & 0xFF);
-                                  msg.size = skosh_midi_msg_size((uint8_t)((status >> 16) & 0xFF));
+                                  msg.size = skosh_midi_msg_size(msg.data[0]);
                                   if (msg.size > 0)
                                       skosh_midi_rb_push(&((skosh_midi_port*)pp)->rb, &msg);
                               }
