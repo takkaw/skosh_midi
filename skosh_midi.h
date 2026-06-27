@@ -27,7 +27,7 @@ A single-header, MIDI 1.0 I/O library.
 
 #include <stddef.h>
 #include <stdint.h>
-#define SKOSH_MIDI_VERSION (0x000400) /* 0.4.0 */
+#define SKOSH_MIDI_VERSION (0x000401) /* 0.4.1 */
 #define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)             /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
