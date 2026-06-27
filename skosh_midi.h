@@ -144,6 +144,7 @@ static int32_t skosh_midi_port_find(uint8_t dir, snd_seq_t** seq_out, int32_t in
     snd_seq_t* seq;
     if (snd_seq_open(&seq, "default", dir ? SND_SEQ_OPEN_INPUT : SND_SEQ_OPEN_OUTPUT, 0) < 0)
         return -1;
+    snd_seq_set_client_name(seq, SKOSH_MIDI_APP_NAME);
 
     snd_seq_client_info_t* client_info;
     snd_seq_client_info_alloca(&client_info);
@@ -213,7 +214,7 @@ int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
     do {
         if (skosh_midi_port_find(dir, &seq, port, port_info) != port) break;
         port_id =
-            snd_seq_create_simple_port(seq, "skosh_midi",
+            snd_seq_create_simple_port(seq, SKOSH_MIDI_APP_NAME "_port",
                                        dir ? SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE
                                            : SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ,
                                        SND_SEQ_PORT_TYPE_APPLICATION);
