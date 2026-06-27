@@ -31,6 +31,9 @@ A single-header, MIDI 1.0 I/O library.
 #define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)             /* I looks like 1 */
 #define SKOSH_MIDI_MSG_SIZE (3)
+#ifndef SKOSH_MIDI_APP_NAME
+#define SKOSH_MIDI_APP_NAME "skosh_midi"
+#endif /* SKOSH_MIDI_APP_NAME */
 #ifndef SKOSH_MIDI_RB_SIZE
 #define SKOSH_MIDI_RB_SIZE (64)
 #endif /* SKOSH_MIDI_RB_SIZE */
@@ -318,13 +321,13 @@ int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p)
     *p = (skosh_midi_port){0};
     p->dir = dir;
     do {
-        if (MIDIClientCreate(CFSTR("skosh_midi"), NULL, NULL, &(p->client)) != noErr) break;
+        if (MIDIClientCreate(CFSTR(SKOSH_MIDI_APP_NAME), NULL, NULL, &(p->client)) != noErr) break;
         p->endpoint = dir ? MIDIGetSource((ItemCount)port) : MIDIGetDestination((ItemCount)port);
         if (!p->endpoint) break;
         OSStatus st =
-            (!dir ? MIDIOutputPortCreate(p->client, CFSTR("skosh_midi"), &(p->port))
+            (!dir ? MIDIOutputPortCreate(p->client, CFSTR(SKOSH_MIDI_APP_NAME "_out"), &(p->port))
                   : MIDIInputPortCreateWithProtocol(
-                        p->client, CFSTR("skosh_midi"), kMIDIProtocol_1_0, &(p->port),
+                        p->client, CFSTR(SKOSH_MIDI_APP_NAME "_in"), kMIDIProtocol_1_0, &(p->port),
                         ^(const MIDIEventList* evtlist, void* pp) {
                           const MIDIEventPacket* pkt = &evtlist->packet[0];
                           for (uint32_t i = 0; i < evtlist->numPackets; i++) {
