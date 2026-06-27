@@ -25,16 +25,16 @@ A cross-platform single-header MIDI 1.0 I/O library in <500 lines.
 
 #include <stddef.h>
 #include <stdint.h>
-#define SKOSH_MIDI_VERSION (0x000401) /* 0.4.1 */
-#define SKOSH_MIDI_OUT (0)            /* O looks like 0 */
-#define SKOSH_MIDI_IN (1)             /* I looks like 1 */
+#define SKOSH_MIDI_VERSION (0x000401)    /* 0.4.1 */
+#define SKOSH_MIDI_OUT (0)               /* O looks like 0 */
+#define SKOSH_MIDI_IN (1)                /* I looks like 1 */
+#ifndef SKOSH_MIDI_APP_NAME              /* SKOSH_MIDI_APP_NAME is overridable */
+#define SKOSH_MIDI_APP_NAME "skosh_midi" /* app name for ALSA/CoreMIDI */
+#endif                                   /* SKOSH_MIDI_APP_NAME */
+#ifndef SKOSH_MIDI_RB_SIZE               /* SKOSH_MIDI_RB_SIZE is overridable */
+#define SKOSH_MIDI_RB_SIZE (64)          /* ring buffer size; power of 2 recommended */
+#endif                                   /* SKOSH_MIDI_RB_SIZE */
 #define SKOSH_MIDI_MSG_SIZE (3)
-#ifndef SKOSH_MIDI_APP_NAME
-#define SKOSH_MIDI_APP_NAME "skosh_midi"
-#endif /* SKOSH_MIDI_APP_NAME */
-#ifndef SKOSH_MIDI_RB_SIZE
-#define SKOSH_MIDI_RB_SIZE (64)
-#endif /* SKOSH_MIDI_RB_SIZE */
 
 #if defined(_WIN64) && defined(_MSC_VER)
 #include <intrin.h>
