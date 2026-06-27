@@ -93,13 +93,21 @@ typedef struct {
 #error "Unsupported platform."
 #endif /* __linux__ || __APPLE__ || _WIN64 */
 
+/* Get the number of ports. */
 extern int32_t skosh_midi_port_count(uint8_t dir);
+/* Get the name of a MIDI port into namebuf. */
 extern int32_t skosh_midi_port_name(uint8_t dir, int32_t port, char* namebuf, size_t buflen);
+/* Open a MIDI port and initialize p. */
 extern int32_t skosh_midi_port_open(uint8_t dir, int32_t port, skosh_midi_port* p);
+/* Close the MIDI port p. */
 extern int32_t skosh_midi_port_close(skosh_midi_port* p);
+/* Receive a MIDI message into msg. */
 extern int32_t skosh_midi_port_recv(skosh_midi_port* p, skosh_midi_msg* msg);
+/* Send a MIDI message from msg. */
 extern int32_t skosh_midi_port_send(skosh_midi_port* p, const skosh_midi_msg* msg);
-extern int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg*);
+/* Push a MIDI message to rb. */
+extern int8_t skosh_midi_rb_push(skosh_midi_rb* rb, const skosh_midi_msg* msg);
+/* Pop a MIDI message from rb. */
 extern int8_t skosh_midi_rb_pop(skosh_midi_rb* rb, skosh_midi_msg* msg);
 #endif /* SKOSH_MIDI_H */
 
