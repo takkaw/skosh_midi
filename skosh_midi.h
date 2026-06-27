@@ -25,7 +25,7 @@ A cross-platform single-header MIDI 1.0 I/O library in <500 lines.
 
 #include <stddef.h>
 #include <stdint.h>
-#define SKOSH_MIDI_VERSION (0x000401)    /* 0.4.1 */
+#define SKOSH_MIDI_VERSION (0x000402)    /* 0.4.2 */
 #define SKOSH_MIDI_OUT (0)               /* O looks like 0 */
 #define SKOSH_MIDI_IN (1)                /* I looks like 1 */
 #ifndef SKOSH_MIDI_APP_NAME              /* SKOSH_MIDI_APP_NAME is overridable */
